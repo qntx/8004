@@ -16,17 +16,22 @@ const GitHubIcon: FC<{ className?: string }> = ({ className }) => (
 const WALLET_BTN =
   'flex items-center gap-2 rounded-lg border border-border/60 bg-accent/50 px-4 text-sm font-medium text-foreground/80 transition-colors hover:bg-accent'
 
-export const Header: FC = () => {
+export const Header: FC<{ onBrandClick?: () => void }> = ({ onBrandClick }) => {
   return (
     <header className="flex h-14 items-center justify-between px-6">
       {/* Brand */}
-      <div className="flex items-center gap-0">
+      <button
+        type="button"
+        onClick={onBrandClick}
+        className="flex cursor-pointer items-center gap-0 transition-opacity hover:opacity-70"
+        aria-label="Back to home"
+      >
         <span className="font-brand text-base font-semibold tracking-tight text-foreground">
           qnTX
         </span>
         <span className="text-xs text-muted-foreground/50">&nbsp;/&nbsp;</span>
         <span className="text-xs text-muted-foreground/50">8004</span>
-      </div>
+      </button>
 
       {/* Actions */}
       <div className="flex items-center gap-1.5">

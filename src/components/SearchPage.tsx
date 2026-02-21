@@ -25,6 +25,14 @@ export function SearchPage() {
   const dismissWalletPrompt = useCallback(() => setShowWalletPrompt(false), [])
   const closeDetail = useCallback(() => setSelectedAgent(null), [])
 
+  /** Reset to the welcome hero view. */
+  const resetToHome = useCallback(() => {
+    setInput('')
+    setSubmittedQuery('')
+    setSelectedAgent(null)
+    setShowWalletPrompt(false)
+  }, [])
+
   const handleSubmit = useCallback(() => {
     const q = input.trim()
     if (!q) return
@@ -41,7 +49,7 @@ export function SearchPage() {
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <Header />
+      <Header onBrandClick={resetToHome} />
 
       <main
         className="mx-auto flex w-full flex-1 flex-col px-6 pb-12"
