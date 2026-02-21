@@ -1,6 +1,19 @@
 import { getDefaultConfig } from '@rainbow-me/rainbowkit'
-import { injectedWallet, walletConnectWallet, rainbowWallet } from '@rainbow-me/rainbowkit/wallets'
-import { base, mainnet } from 'viem/chains'
+import {
+  injectedWallet,
+  baseAccount,
+  walletConnectWallet,
+  rainbowWallet,
+} from '@rainbow-me/rainbowkit/wallets'
+import { monad as monadBase } from 'viem/chains'
+
+/** Monad chain with icon for RainbowKit (not yet in RainbowKit's mainnet registry) */
+const monad = {
+  ...monadBase,
+  iconUrl:
+    'data:image/svg+xml,%3Csvg%20width%3D%2233%22%20height%3D%2232%22%20viewBox%3D%220%200%2033%2032%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Cpath%20d%3D%22M16.8163%200C12.1959%200%200.816406%2011.3792%200.816406%2015.9999C0.816406%2020.6206%2012.1959%2032%2016.8163%2032C21.4367%2032%2032.8164%2020.6204%2032.8164%2015.9999C32.8164%2011.3794%2021.4369%200%2016.8163%200ZM14.323%2025.1492C12.3746%2024.6183%207.13621%2015.455%207.66723%2013.5066C8.19825%2011.5581%2017.3614%206.31979%2019.3097%206.8508C21.2582%207.38173%2026.4966%2016.5449%2025.9656%2018.4934C25.4346%2020.4418%2016.2714%2025.6802%2014.323%2025.1492Z%22%20fill%3D%22%23836EF9%22%2F%3E%0A%3C%2Fsvg%3E%0A',
+  iconBackground: 'transparent',
+} as const
 
 /** WalletConnect project ID — override via VITE_WC_PROJECT_ID env var */
 const WALLETCONNECT_PROJECT_ID =
@@ -9,11 +22,11 @@ const WALLETCONNECT_PROJECT_ID =
 export const wagmiConfig = getDefaultConfig({
   appName: 'ERC-8004 Search',
   projectId: WALLETCONNECT_PROJECT_ID,
-  chains: [base, mainnet],
+  chains: [monad],
   wallets: [
     {
       groupName: 'Recommended',
-      wallets: [injectedWallet, rainbowWallet, walletConnectWallet],
+      wallets: [injectedWallet, baseAccount, rainbowWallet, walletConnectWallet],
     },
   ],
 })

@@ -33,7 +33,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider theme={rkTheme} modalSize="compact">
+        <RainbowKitProvider theme={rkTheme} initialChain={143} modalSize="compact">
           {children}
         </RainbowKitProvider>
       </QueryClientProvider>
