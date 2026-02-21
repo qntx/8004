@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, type FC } from 'react'
+import { useCallback, useEffect, useRef, useState, type FC } from 'react'
 import {
   XIcon,
   ExternalLinkIcon,
@@ -11,10 +11,10 @@ import {
   LinkIcon,
 } from 'lucide-react'
 import type { SearchResultItem } from '@/lib/types'
+import { normalizeTrustModels } from '@/lib/normalize'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { ChainBadge } from '@/components/ChainBadge'
 import { ServiceTag } from '@/components/ServiceTag'
-import { useState } from 'react'
 
 /** Extract initials from an agent name for the avatar placeholder. */
 function initials(name: string): string {
@@ -107,6 +107,7 @@ interface AgentDetailModalProps {
 /** Full-screen modal showing complete agent information. */
 export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) => {
   const dialogRef = useRef<HTMLDialogElement>(null)
+  const [imgFailed, setImgFailed] = useState(false)
 
   // Open/close the native dialog in sync with the `item` prop
   useEffect(() => {
@@ -141,7 +142,7 @@ export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) =
   const meta = item.metadata
   const services = meta?.services ?? []
   const registrations = meta?.registrations ?? []
-  const trustModels = meta?.supportedTrust ?? []
+  const trustModels = normalizeTrustModels(meta?.supportedTrust)
 
   return (
     <dialog
@@ -154,10 +155,12 @@ export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) =
         {/* ── Header ──────────────────────────────────────────── */}
         <div className="sticky top-0 z-10 flex items-start gap-4 border-b border-border/40 bg-background/95 p-5 backdrop-blur-sm">
           {/* Avatar */}
-          {meta?.image ? (
+          {meta?.image && !imgFailed ? (
             <img
+              key={item.agentId}
               src={meta.image}
               alt={item.name}
+              onError={() => setImgFailed(true)}
               className="size-14 shrink-0 rounded-xl border border-border/40 object-cover"
             />
           ) : (

@@ -1,6 +1,7 @@
-import type { FC } from 'react'
+import { useState, type FC } from 'react'
 import { ExternalLinkIcon, ShieldCheckIcon, ZapIcon } from 'lucide-react'
 import type { SearchResultItem } from '@/lib/types'
+import { normalizeTrustModels } from '@/lib/normalize'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { ChainBadge } from '@/components/ChainBadge'
 import { ServiceTag } from '@/components/ServiceTag'
@@ -19,8 +20,10 @@ export const AgentCard: FC<{
   item: SearchResultItem
   onSelect: (item: SearchResultItem) => void
 }> = ({ item, onSelect }) => {
+  const [imgFailed, setImgFailed] = useState(false)
   const meta = item.metadata
   const services = meta?.services ?? []
+  const trustModels = normalizeTrustModels(meta?.supportedTrust)
   const hasEndpoint = meta?.endpoint && meta.endpoint.length > 0
 
   return (
@@ -32,10 +35,11 @@ export const AgentCard: FC<{
       {/* Top row: avatar + name + score */}
       <div className="flex items-start gap-3">
         {/* Avatar */}
-        {meta?.image ? (
+        {meta?.image && !imgFailed ? (
           <img
             src={meta.image}
             alt={item.name}
+            onError={() => setImgFailed(true)}
             className="size-10 shrink-0 rounded-lg border border-border/40 object-cover"
           />
         ) : (
@@ -85,10 +89,10 @@ export const AgentCard: FC<{
             x402
           </span>
         )}
-        {meta?.supportedTrust && meta.supportedTrust.length > 0 && (
+        {trustModels.length > 0 && (
           <span
             className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"
-            title={`Trust: ${meta.supportedTrust.join(', ')}`}
+            title={`Trust: ${trustModels.join(', ')}`}
           >
             <ShieldCheckIcon className="size-2.5" />
             trust
