@@ -9,6 +9,10 @@ export interface SearchRequest {
   filters?: Filters
   minScore?: number
   includeMetadata?: boolean
+  /** Wallet addresses to exclude from reputation re-aggregation. */
+  reputationExcludeWallets?: string[]
+  /** Wallet addresses to exclusively include in reputation re-aggregation. */
+  reputationIncludeWallets?: string[]
 }
 
 /** Structured filter criteria. */
@@ -43,6 +47,16 @@ export interface SearchResultItem {
   matchReasons: string[]
 }
 
+/** Per-wallet feedback breakdown returned by the API. */
+export interface FeedbackDetail {
+  /** Wallet address (abbreviated key "w" from the API). */
+  w: string
+  /** Average score from this wallet. */
+  s: number
+  /** Number of feedbacks from this wallet. */
+  c: number
+}
+
 /** Extended metadata for a search result. */
 export interface ResultMetadata {
   agentURI: string
@@ -54,6 +68,10 @@ export interface ResultMetadata {
   registrations: RegistrationEntry[]
   endpoint: string
   reputationScore: number
+  /** Number of on-chain feedback submissions contributing to the score. */
+  feedbackCount: number
+  /** Per-wallet feedback breakdown. Empty array when no feedback exists. */
+  feedbackDetails: FeedbackDetail[]
   createdAt: number
   updatedAt: string
 }

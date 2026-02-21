@@ -1,5 +1,5 @@
 import { useState, type FC } from 'react'
-import { ExternalLinkIcon, ShieldCheckIcon, ZapIcon } from 'lucide-react'
+import { ExternalLinkIcon, MessageSquareIcon, ShieldCheckIcon, ZapIcon } from 'lucide-react'
 import type { SearchResultItem } from '@/lib/types'
 import { normalizeTrustModels } from '@/lib/normalize'
 import { ScoreBadge } from '@/components/ScoreBadge'
@@ -96,6 +96,15 @@ export const AgentCard: FC<{
           >
             <ShieldCheckIcon className="size-2.5" />
             trust
+          </span>
+        )}
+        {meta && meta.feedbackCount > 0 && (
+          <span
+            className="inline-flex items-center gap-0.5 rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400"
+            title={`${meta.feedbackCount} feedback${meta.feedbackCount === 1 ? '' : 's'}, score: ${meta.reputationScore.toFixed(2)}`}
+          >
+            <MessageSquareIcon className="size-2.5" />
+            {meta.feedbackCount}
           </span>
         )}
       </div>

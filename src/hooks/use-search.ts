@@ -1,12 +1,14 @@
 import { useCallback, useRef, useState } from 'react'
 import { searchAgents } from '@/lib/api'
 import { PAGE_SIZE } from '@/lib/constants'
-import type { Filters, SearchResultItem } from '@/lib/types'
+import type { Filters, SearchResultItem, SearchRequest } from '@/lib/types'
+import type { WalletFilterParams } from '@/hooks/use-filters'
 
 /** Internal fetch state. */
 interface FetchState {
   forQuery: string
   forFilters: Filters | undefined
+  forWalletFilter: WalletFilterParams
   results: SearchResultItem[]
   total: number
   loading: boolean
@@ -18,6 +20,7 @@ interface FetchState {
 const INITIAL: FetchState = {
   forQuery: '',
   forFilters: undefined,
+  forWalletFilter: {},
   results: [],
   total: 0,
   loading: false,
@@ -33,8 +36,8 @@ export interface SearchResult {
   loading: boolean
   error: string | null
   hasMore: boolean
-  /** Trigger a search for the given query and optional filters. */
-  search: (query: string, filters?: Filters) => void
+  /** Trigger a search for the given query, optional filters, and wallet filter params. */
+  search: (query: string, filters?: Filters, walletFilter?: WalletFilterParams) => void
   /** Load the next page of results. */
   loadMore: () => void
 }
@@ -52,9 +55,11 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
   const abortRef = useRef<AbortController | null>(null)
 
   const search = useCallback(
-    (query: string, filters?: Filters) => {
+    (query: string, filters?: Filters, walletFilter?: WalletFilterParams) => {
       const q = query.trim()
       if (!q) return
+
+      const wf = walletFilter ?? {}
 
       // x402 requires a connected wallet — refuse to search without one
       if (!fetchFn) {
@@ -62,6 +67,7 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
           ...s,
           forQuery: q,
           forFilters: filters,
+          forWalletFilter: wf,
           loading: false,
           error: 'Wallet not connected. Please connect your wallet to search.',
         }))
@@ -73,20 +79,33 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
       const controller = new AbortController()
       abortRef.current = controller
 
-      setState((s) => ({ ...s, loading: true, error: null, forQuery: q, forFilters: filters }))
+      setState((s) => ({
+        ...s,
+        loading: true,
+        error: null,
+        forQuery: q,
+        forFilters: filters,
+        forWalletFilter: wf,
+      }))
 
       // Strip empty filter objects to keep the request body clean
       const cleanFilters = filters && hasActiveFilters(filters) ? filters : undefined
 
-      searchAgents(
-        { query: q, limit: PAGE_SIZE, includeMetadata: true, filters: cleanFilters },
-        fetchFn,
-      )
+      const req: SearchRequest = {
+        query: q,
+        limit: PAGE_SIZE,
+        includeMetadata: true,
+        filters: cleanFilters,
+        ...wf,
+      }
+
+      searchAgents(req, fetchFn)
         .then((res) => {
           if (controller.signal.aborted) return
           setState({
             forQuery: q,
             forFilters: filters,
+            forWalletFilter: wf,
             results: res.results,
             total: res.total,
             loading: false,
@@ -115,20 +134,21 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
     const cleanFilters =
       state.forFilters && hasActiveFilters(state.forFilters) ? state.forFilters : undefined
 
-    searchAgents(
-      {
-        query: state.forQuery,
-        limit: PAGE_SIZE,
-        cursor: state.nextCursor ?? undefined,
-        includeMetadata: true,
-        filters: cleanFilters,
-      },
-      fetchFn,
-    )
+    const req: SearchRequest = {
+      query: state.forQuery,
+      limit: PAGE_SIZE,
+      cursor: state.nextCursor ?? undefined,
+      includeMetadata: true,
+      filters: cleanFilters,
+      ...state.forWalletFilter,
+    }
+
+    searchAgents(req, fetchFn)
       .then((res) => {
         setState((prev) => ({
           forQuery: prev.forQuery,
           forFilters: prev.forFilters,
+          forWalletFilter: prev.forWalletFilter,
           results: [...prev.results, ...res.results],
           total: res.total,
           loading: false,
@@ -144,7 +164,14 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
           error: err instanceof Error ? err.message : 'Failed to load more',
         }))
       })
-  }, [state.forQuery, state.forFilters, state.nextCursor, state.loading, fetchFn])
+  }, [
+    state.forQuery,
+    state.forFilters,
+    state.forWalletFilter,
+    state.nextCursor,
+    state.loading,
+    fetchFn,
+  ])
 
   return {
     results: state.results,

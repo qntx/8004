@@ -9,8 +9,9 @@ import {
   CopyIcon,
   CheckIcon,
   LinkIcon,
+  MessageSquareIcon,
 } from 'lucide-react'
-import type { SearchResultItem } from '@/lib/types'
+import type { SearchResultItem, FeedbackDetail } from '@/lib/types'
 import { normalizeTrustModels } from '@/lib/normalize'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { ChainBadge } from '@/components/ChainBadge'
@@ -23,6 +24,24 @@ function initials(name: string): string {
     .slice(0, 2)
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('')
+}
+
+/**
+ * Safely parse feedback details from the API response.
+ * The API returns objects with abbreviated keys {w, s, c}.
+ */
+function parseFeedbackDetails(raw: unknown[]): FeedbackDetail[] {
+  return raw
+    .map((item) => {
+      if (typeof item !== 'object' || item === null) return null
+      const obj = item as Record<string, unknown>
+      const w = typeof obj.w === 'string' ? obj.w : String(obj.w ?? '')
+      const s = typeof obj.s === 'number' ? obj.s : 0
+      const c = typeof obj.c === 'number' ? obj.c : 0
+      if (!w) return null
+      return { w, s, c }
+    })
+    .filter((v): v is FeedbackDetail => v !== null)
 }
 
 /** Format a Unix epoch timestamp into a human-readable date string. */
@@ -271,9 +290,59 @@ export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) =
               <MetaRow
                 label="Reputation Score"
                 value={
-                  meta.reputationScore > 0 ? `${(meta.reputationScore * 100).toFixed(0)}%` : 'N/A'
+                  meta.feedbackCount > 0
+                    ? `${meta.reputationScore >= 0 ? '+' : ''}${meta.reputationScore.toFixed(2)} / 5.0`
+                    : 'N/A'
                 }
               />
+              <MetaRow
+                label="Feedback Count"
+                value={meta.feedbackCount > 0 ? String(meta.feedbackCount) : 'None'}
+              />
+            </div>
+          )}
+
+          {/* Feedback details */}
+          {meta && meta.feedbackDetails && meta.feedbackDetails.length > 0 && (
+            <div>
+              <h3 className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                <span className="inline-flex items-center gap-1">
+                  <MessageSquareIcon className="size-3" />
+                  Feedback Breakdown ({meta.feedbackDetails.length} wallet
+                  {meta.feedbackDetails.length === 1 ? '' : 's'})
+                </span>
+              </h3>
+              <div className="flex flex-col gap-1.5">
+                {parseFeedbackDetails(meta.feedbackDetails).map((fd) => (
+                  <div
+                    key={fd.w}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-muted/30 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="truncate font-mono text-[11px] text-muted-foreground/80">
+                        {fd.w}
+                      </span>
+                      <CopyButton text={fd.w} />
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span
+                        className={[
+                          'text-xs font-medium tabular-nums',
+                          fd.s >= 0
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-red-600 dark:text-red-400',
+                        ].join(' ')}
+                      >
+                        {fd.s >= 0 ? '+' : ''}
+                        {fd.s.toFixed(2)}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/50">
+                        {fd.c} vote{fd.c === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

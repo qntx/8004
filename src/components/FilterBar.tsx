@@ -1,6 +1,11 @@
 import { type FC, useCallback, useState } from 'react'
-import { ChevronDownIcon, FilterIcon, RotateCcwIcon, ZapIcon } from 'lucide-react'
-import { SERVICE_PROTOCOLS, TRUST_MODELS, type UseFiltersResult } from '@/hooks/use-filters'
+import { ChevronDownIcon, FilterIcon, RotateCcwIcon, ZapIcon, WalletIcon } from 'lucide-react'
+import {
+  SERVICE_PROTOCOLS,
+  TRUST_MODELS,
+  type UseFiltersResult,
+  type WalletFilterMode,
+} from '@/hooks/use-filters'
 
 /** Collapsible filter bar for ERC-8004 search refinement. */
 export const FilterBar: FC<{ filters: UseFiltersResult }> = ({ filters }) => {
@@ -75,6 +80,16 @@ export const FilterBar: FC<{ filters: UseFiltersResult }> = ({ filters }) => {
               </div>
             </FilterSection>
 
+            {/* Wallet reputation filter */}
+            <FilterSection title="Reputation Wallets">
+              <WalletFilter
+                mode={filters.state.walletFilterMode}
+                addresses={filters.state.walletAddresses}
+                onModeChange={filters.setWalletFilterMode}
+                onAddressesChange={filters.setWalletAddresses}
+              />
+            </FilterSection>
+
             {/* Reset */}
             {filters.hasActiveFilters && (
               <button
@@ -130,6 +145,52 @@ const ChipGroup: FC<{
     })}
   </div>
 )
+
+/** Wallet reputation filter — mode selector + addresses input. */
+const WalletFilter: FC<{
+  mode: WalletFilterMode
+  addresses: string
+  onModeChange: (mode: WalletFilterMode) => void
+  onAddressesChange: (value: string) => void
+}> = ({ mode, addresses, onModeChange, onAddressesChange }) => {
+  const modes: { value: WalletFilterMode; label: string }[] = [
+    { value: 'none', label: 'Off' },
+    { value: 'exclude', label: 'Exclude' },
+    { value: 'include', label: 'Include Only' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {modes.map((m) => (
+          <button
+            key={m.value}
+            type="button"
+            onClick={() => onModeChange(m.value)}
+            className={[
+              'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors',
+              mode === m.value
+                ? 'border-foreground/20 bg-foreground/10 text-foreground'
+                : 'border-border/60 bg-transparent text-muted-foreground/60 hover:border-border hover:text-muted-foreground',
+            ].join(' ')}
+          >
+            {m.value !== 'none' && <WalletIcon className="size-3" />}
+            {m.label}
+          </button>
+        ))}
+      </div>
+      {mode !== 'none' && (
+        <input
+          type="text"
+          value={addresses}
+          onChange={(e) => onAddressesChange(e.target.value)}
+          placeholder="0xabc..., 0xdef... (comma-separated)"
+          className="w-full rounded-md border border-border/60 bg-transparent px-2.5 py-1.5 font-mono text-[11px] text-foreground placeholder:text-muted-foreground/40 focus:border-foreground/30 focus:outline-none"
+        />
+      )}
+    </div>
+  )
+}
 
 /** Single boolean toggle chip. */
 const ToggleChip: FC<{

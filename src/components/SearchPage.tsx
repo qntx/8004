@@ -41,8 +41,8 @@ export function SearchPage() {
       return
     }
     setSubmittedQuery(q)
-    search(q, filtersHook.filters)
-  }, [input, search, walletReady, filtersHook.filters])
+    search(q, filtersHook.filters, filtersHook.walletFilterParams)
+  }, [input, search, walletReady, filtersHook.filters, filtersHook.walletFilterParams])
 
   // Layout transitions when a search has been performed
   const hasSearched = submittedQuery.length > 0
