@@ -15,13 +15,20 @@ function initials(name: string): string {
 }
 
 /** Single agent result card with metadata. */
-export const AgentCard: FC<{ item: SearchResultItem }> = ({ item }) => {
+export const AgentCard: FC<{
+  item: SearchResultItem
+  onSelect: (item: SearchResultItem) => void
+}> = ({ item, onSelect }) => {
   const meta = item.metadata
   const services = meta?.services ?? []
   const hasEndpoint = meta?.endpoint && meta.endpoint.length > 0
 
   return (
-    <div className="group flex flex-col gap-3 rounded-xl border border-border/60 bg-background p-4 transition-shadow hover:shadow-md">
+    <button
+      type="button"
+      onClick={() => onSelect(item)}
+      className="group flex cursor-pointer flex-col gap-3 rounded-xl border border-border/60 bg-background p-4 text-left transition-all hover:shadow-md hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+    >
       {/* Top row: avatar + name + score */}
       <div className="flex items-start gap-3">
         {/* Avatar */}
@@ -89,18 +96,13 @@ export const AgentCard: FC<{ item: SearchResultItem }> = ({ item }) => {
         )}
       </div>
 
-      {/* Footer: endpoint link */}
+      {/* Footer: endpoint hint */}
       {hasEndpoint && (
-        <a
-          href={meta!.endpoint}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-auto flex items-center gap-1 text-[11px] text-muted-foreground/60 transition-colors hover:text-foreground"
-        >
+        <span className="mt-auto flex items-center gap-1 text-[11px] text-muted-foreground/60">
           <ExternalLinkIcon className="size-3" />
           <span className="truncate">{meta!.endpoint}</span>
-        </a>
+        </span>
       )}
-    </div>
+    </button>
   )
 }

@@ -12,6 +12,7 @@ interface AgentGridProps {
   hasMore: boolean
   query: string
   onLoadMore: () => void
+  onSelect: (item: SearchResultItem) => void
 }
 
 /** Responsive grid of agent cards with pagination. */
@@ -23,6 +24,7 @@ export const AgentGrid: FC<AgentGridProps> = ({
   hasMore,
   query,
   onLoadMore,
+  onSelect,
 }) => {
   // Show empty state when there are no results
   if (!loading && results.length === 0) {
@@ -41,7 +43,7 @@ export const AgentGrid: FC<AgentGridProps> = ({
       {/* Card grid */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {results.map((item) => (
-          <AgentCard key={`${item.agentId}-${item.rank}`} item={item} />
+          <AgentCard key={`${item.agentId}-${item.rank}`} item={item} onSelect={onSelect} />
         ))}
       </div>
 

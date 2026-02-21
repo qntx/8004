@@ -4,22 +4,26 @@ import { Header } from '@/components/Header'
 import { SearchBar } from '@/components/SearchBar'
 import { FilterBar } from '@/components/FilterBar'
 import { AgentGrid } from '@/components/AgentGrid'
+import { AgentDetailModal } from '@/components/AgentDetailModal'
 import { WalletPrompt } from '@/components/WalletPrompt'
 import { useSearch } from '@/hooks/use-search'
 import { useFilters } from '@/hooks/use-filters'
 import { useX402Fetch } from '@/hooks/use-x402-fetch'
 import { MAX_CONTENT_WIDTH } from '@/lib/constants'
+import type { SearchResultItem } from '@/lib/types'
 
 /** Main search page with centered hero that transitions upward on search. */
 export function SearchPage() {
   const [input, setInput] = useState('')
   const [submittedQuery, setSubmittedQuery] = useState('')
   const [showWalletPrompt, setShowWalletPrompt] = useState(false)
+  const [selectedAgent, setSelectedAgent] = useState<SearchResultItem | null>(null)
   const { fetchWithPayment, isReady: walletReady } = useX402Fetch()
   const { results, total, loading, error, hasMore, search, loadMore } = useSearch(fetchWithPayment)
   const filtersHook = useFilters()
 
   const dismissWalletPrompt = useCallback(() => setShowWalletPrompt(false), [])
+  const closeDetail = useCallback(() => setSelectedAgent(null), [])
 
   const handleSubmit = useCallback(() => {
     const q = input.trim()
@@ -94,10 +98,13 @@ export function SearchPage() {
               hasMore={hasMore}
               query={submittedQuery}
               onLoadMore={loadMore}
+              onSelect={setSelectedAgent}
             />
           </div>
         )}
       </main>
+
+      <AgentDetailModal item={selectedAgent} onClose={closeDetail} />
     </div>
   )
 }
