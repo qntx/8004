@@ -4,6 +4,7 @@ import { Header } from '@/components/Header'
 import { SearchBar } from '@/components/SearchBar'
 import { FilterBar } from '@/components/FilterBar'
 import { AgentGrid } from '@/components/AgentGrid'
+import { WalletPrompt } from '@/components/WalletPrompt'
 import { useSearch } from '@/hooks/use-search'
 import { useFilters } from '@/hooks/use-filters'
 import { useX402Fetch } from '@/hooks/use-x402-fetch'
@@ -13,17 +14,18 @@ import { MAX_CONTENT_WIDTH } from '@/lib/constants'
 export function SearchPage() {
   const [input, setInput] = useState('')
   const [submittedQuery, setSubmittedQuery] = useState('')
+  const [showWalletPrompt, setShowWalletPrompt] = useState(false)
   const { fetchWithPayment, isReady: walletReady } = useX402Fetch()
   const { results, total, loading, error, hasMore, search, loadMore } = useSearch(fetchWithPayment)
   const filtersHook = useFilters()
+
+  const dismissWalletPrompt = useCallback(() => setShowWalletPrompt(false), [])
 
   const handleSubmit = useCallback(() => {
     const q = input.trim()
     if (!q) return
     if (!walletReady) {
-      alert(
-        'Please connect your wallet first. Each search requires a small USDC micropayment via x402.',
-      )
+      setShowWalletPrompt(true)
       return
     }
     setSubmittedQuery(q)
@@ -69,8 +71,11 @@ export function SearchPage() {
           <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} loading={loading} />
           <FilterBar filters={filtersHook} />
 
+          {/* Inline wallet connection prompt — replaces browser alert */}
+          <WalletPrompt visible={showWalletPrompt} onDismiss={dismissWalletPrompt} />
+
           {/* Wallet connection hint */}
-          {!walletReady && (
+          {!walletReady && !showWalletPrompt && (
             <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground/60">
               <WalletIcon className="size-3" />
               Connect wallet for x402 payment-gated searches

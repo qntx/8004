@@ -1,4 +1,4 @@
-import { SearchIcon, XIcon, LoaderIcon } from 'lucide-react'
+import { SearchIcon, XIcon, LoaderIcon, ArrowRightIcon } from 'lucide-react'
 import type { FC, FormEvent } from 'react'
 
 interface SearchBarProps {
@@ -43,9 +43,10 @@ export const SearchBar: FC<SearchBarProps> = ({ value, onChange, onSubmit, loadi
         {!loading && value.trim() && (
           <button
             type="submit"
-            className="rounded-lg bg-foreground/10 px-2.5 py-1 text-xs font-medium text-foreground/70 transition-colors hover:bg-foreground/20 hover:text-foreground"
+            className="rounded-lg p-1 text-muted-foreground/60 transition-colors hover:text-foreground"
+            aria-label="Search"
           >
-            Search
+            <ArrowRightIcon className="size-4" />
           </button>
         )}
       </div>

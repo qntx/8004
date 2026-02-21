@@ -57,9 +57,6 @@ Every search follows the same stateless cycle: **query → HTTP 402 → sign pay
 - **Payment-gated access** — Per-query USDC micropayments via x402, settled on Monad
 - **Multi-chain discovery** — Agents from Ethereum, Base, Arbitrum, Optimism, Polygon, Avalanche, BNB Chain, and more
 - **Rich agent cards** — Name, description, relevance score, chain badge, service tags, x402 support, trust indicators
-- **Cursor pagination** — Infinite scroll through large result sets without re-signing
-- **Dark / light theme** — System-aware with manual override, persisted to localStorage
-- **Fully client-side** — Static SPA deployed to GitHub Pages, zero backend infrastructure
 
 ## Infrastructure
 
@@ -69,10 +66,6 @@ Part of QNTX's open-source ecosystem for autonomous AI agents:
 - **[`facilitator`](https://github.com/qntx/facilitator)** — Settlement server for on-chain payment verification
 - **[`r402`](https://github.com/qntx/r402)** — Rust implementation of the x402 protocol
 - **[`chat`](https://github.com/qntx/chat)** — AI chat interface with per-message micropayments
-
-## Deployment
-
-Automatically deployed to GitHub Pages on every push to `main` via the [qntx/workflows](https://github.com/qntx/workflows) reusable workflow.
 
 ## License
 
