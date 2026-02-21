@@ -1,6 +1,6 @@
 /** ERC-8004 search service API base URL */
-// export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
-export const API_URL = import.meta.env.VITE_API_URL ?? 'https://search.qntx.fun'
+export const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:8080'
+// export const API_URL = import.meta.env.VITE_API_URL ?? 'https://search.qntx.fun'
 
 /** GitHub repository URL */
 export const GITHUB_URL = 'https://github.com/qntx/8004'

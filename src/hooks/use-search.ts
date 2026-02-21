@@ -1,11 +1,12 @@
 import { useCallback, useRef, useState } from 'react'
 import { searchAgents } from '@/lib/api'
 import { PAGE_SIZE } from '@/lib/constants'
-import type { SearchResultItem } from '@/lib/types'
+import type { Filters, SearchResultItem } from '@/lib/types'
 
 /** Internal fetch state. */
 interface FetchState {
   forQuery: string
+  forFilters: Filters | undefined
   results: SearchResultItem[]
   total: number
   loading: boolean
@@ -16,6 +17,7 @@ interface FetchState {
 
 const INITIAL: FetchState = {
   forQuery: '',
+  forFilters: undefined,
   results: [],
   total: 0,
   loading: false,
@@ -31,8 +33,8 @@ export interface SearchResult {
   loading: boolean
   error: string | null
   hasMore: boolean
-  /** Trigger a search for the given query. Called on form submit (Enter / button). */
-  search: (query: string) => void
+  /** Trigger a search for the given query and optional filters. */
+  search: (query: string, filters?: Filters) => void
   /** Load the next page of results. */
   loadMore: () => void
 }
@@ -43,14 +45,14 @@ export interface SearchResult {
  * x402 requires user interaction (wallet signing) per request, so search
  * must only fire on explicit submit — never on keystroke or debounce.
  *
- * @param fetchFn - x402-enhanced fetch for payment-gated endpoints (null = global fetch)
+ * @param fetchFn - x402-enhanced fetch for payment-gated endpoints (null = wallet not connected)
  */
 export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResult {
   const [state, setState] = useState<FetchState>(INITIAL)
   const abortRef = useRef<AbortController | null>(null)
 
   const search = useCallback(
-    (query: string) => {
+    (query: string, filters?: Filters) => {
       const q = query.trim()
       if (!q) return
 
@@ -59,6 +61,7 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
         setState((s) => ({
           ...s,
           forQuery: q,
+          forFilters: filters,
           loading: false,
           error: 'Wallet not connected. Please connect your wallet to search.',
         }))
@@ -70,13 +73,20 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
       const controller = new AbortController()
       abortRef.current = controller
 
-      setState((s) => ({ ...s, loading: true, error: null, forQuery: q }))
+      setState((s) => ({ ...s, loading: true, error: null, forQuery: q, forFilters: filters }))
 
-      searchAgents({ query: q, limit: PAGE_SIZE, includeMetadata: true }, fetchFn)
+      // Strip empty filter objects to keep the request body clean
+      const cleanFilters = filters && hasActiveFilters(filters) ? filters : undefined
+
+      searchAgents(
+        { query: q, limit: PAGE_SIZE, includeMetadata: true, filters: cleanFilters },
+        fetchFn,
+      )
         .then((res) => {
           if (controller.signal.aborted) return
           setState({
             forQuery: q,
+            forFilters: filters,
             results: res.results,
             total: res.total,
             loading: false,
@@ -102,18 +112,23 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
 
     setState((s) => ({ ...s, loading: true }))
 
+    const cleanFilters =
+      state.forFilters && hasActiveFilters(state.forFilters) ? state.forFilters : undefined
+
     searchAgents(
       {
         query: state.forQuery,
         limit: PAGE_SIZE,
         cursor: state.nextCursor ?? undefined,
         includeMetadata: true,
+        filters: cleanFilters,
       },
       fetchFn,
     )
       .then((res) => {
         setState((prev) => ({
           forQuery: prev.forQuery,
+          forFilters: prev.forFilters,
           results: [...prev.results, ...res.results],
           total: res.total,
           loading: false,
@@ -129,7 +144,7 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
           error: err instanceof Error ? err.message : 'Failed to load more',
         }))
       })
-  }, [state.forQuery, state.nextCursor, state.loading, fetchFn])
+  }, [state.forQuery, state.forFilters, state.nextCursor, state.loading, fetchFn])
 
   return {
     results: state.results,
@@ -140,4 +155,15 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
     search,
     loadMore,
   }
+}
+
+/** Check whether a Filters object has at least one active condition. */
+function hasActiveFilters(f: Filters): boolean {
+  return (
+    (f.equals != null && Object.keys(f.equals).length > 0) ||
+    (f.in != null && Object.keys(f.in).length > 0) ||
+    (f.notIn != null && Object.keys(f.notIn).length > 0) ||
+    (f.exists != null && f.exists.length > 0) ||
+    (f.notExists != null && f.notExists.length > 0)
+  )
 }

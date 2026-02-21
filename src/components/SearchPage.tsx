@@ -2,8 +2,10 @@ import { useCallback, useState } from 'react'
 import { WalletIcon } from 'lucide-react'
 import { Header } from '@/components/Header'
 import { SearchBar } from '@/components/SearchBar'
+import { FilterBar } from '@/components/FilterBar'
 import { AgentGrid } from '@/components/AgentGrid'
 import { useSearch } from '@/hooks/use-search'
+import { useFilters } from '@/hooks/use-filters'
 import { useX402Fetch } from '@/hooks/use-x402-fetch'
 import { MAX_CONTENT_WIDTH } from '@/lib/constants'
 
@@ -13,20 +15,20 @@ export function SearchPage() {
   const [submittedQuery, setSubmittedQuery] = useState('')
   const { fetchWithPayment, isReady: walletReady } = useX402Fetch()
   const { results, total, loading, error, hasMore, search, loadMore } = useSearch(fetchWithPayment)
+  const filtersHook = useFilters()
 
   const handleSubmit = useCallback(() => {
     const q = input.trim()
     if (!q) return
     if (!walletReady) {
-      // Cannot search without a connected wallet — x402 requires signing
       alert(
         'Please connect your wallet first. Each search requires a small USDC micropayment via x402.',
       )
       return
     }
     setSubmittedQuery(q)
-    search(q)
-  }, [input, search, walletReady])
+    search(q, filtersHook.filters)
+  }, [input, search, walletReady, filtersHook.filters])
 
   // Layout transitions when a search has been performed
   const hasSearched = submittedQuery.length > 0
@@ -65,6 +67,7 @@ export function SearchPage() {
             Semantic search across ERC-8004 registered AI agents
           </p>
           <SearchBar value={input} onChange={setInput} onSubmit={handleSubmit} loading={loading} />
+          <FilterBar filters={filtersHook} />
 
           {/* Wallet connection hint */}
           {!walletReady && (
