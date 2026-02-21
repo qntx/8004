@@ -1,29 +1,7 @@
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  type ReactNode,
-} from 'react'
-
-/** Theme preference stored by the user. 'system' follows OS preference. */
-export type ThemePreference = 'light' | 'dark' | 'system'
-
-/** Resolved theme that is actually applied (no 'system'). */
-export type ResolvedTheme = 'light' | 'dark'
-
-interface ThemeContextValue {
-  preference: ThemePreference
-  resolved: ResolvedTheme
-  setTheme: (next: ThemePreference) => void
-  toggleTheme: () => void
-}
+import { useState, useEffect, useCallback, useMemo, type ReactNode } from 'react'
+import { ThemeContext, type ThemePreference, type ResolvedTheme } from '@/lib/theme-context'
 
 const STORAGE_KEY = 'qntx-theme'
-
-const ThemeContext = createContext<ThemeContextValue | null>(null)
 
 /** Reads the stored preference, falling back to 'system'. */
 function getStoredPreference(): ThemePreference {
@@ -94,11 +72,4 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   )
 
   return <ThemeContext value={value}>{children}</ThemeContext>
-}
-
-/** Hook to consume the shared theme context. Must be used within ThemeProvider. */
-export function useTheme(): ThemeContextValue {
-  const ctx = useContext(ThemeContext)
-  if (!ctx) throw new Error('useTheme must be used within ThemeProvider')
-  return ctx
 }

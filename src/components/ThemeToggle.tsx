@@ -1,6 +1,6 @@
 import type { FC } from 'react'
 import { SunIcon, MoonIcon, MonitorIcon } from 'lucide-react'
-import { useTheme } from '@/providers/ThemeProvider'
+import { useTheme } from '@/hooks/use-theme'
 import { ICON_BTN } from '@/lib/styles'
 
 /** Theme toggle — cycles system -> light -> dark with matching icon. */
