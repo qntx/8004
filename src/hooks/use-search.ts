@@ -1,27 +1,27 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { searchAgents } from '@/lib/api'
 import { PAGE_SIZE } from '@/lib/constants'
 import type { SearchResultItem } from '@/lib/types'
 
-/** Internal state that tracks which query results belong to. */
+/** Internal fetch state. */
 interface FetchState {
   forQuery: string
   results: SearchResultItem[]
   total: number
+  loading: boolean
   error: string | null
   hasMore: boolean
   nextCursor: string | null
-  isLoadingMore: boolean
 }
 
-const INITIAL_FETCH: FetchState = {
+const INITIAL: FetchState = {
   forQuery: '',
   results: [],
   total: 0,
+  loading: false,
   error: null,
   hasMore: false,
   nextCursor: null,
-  isLoadingMore: false,
 }
 
 /** Public shape returned by the hook. */
@@ -31,100 +31,113 @@ export interface SearchResult {
   loading: boolean
   error: string | null
   hasMore: boolean
+  /** Trigger a search for the given query. Called on form submit (Enter / button). */
+  search: (query: string) => void
+  /** Load the next page of results. */
   loadMore: () => void
 }
 
-const EMPTY_RESULT: SearchResult = {
-  results: [],
-  total: 0,
-  loading: false,
-  error: null,
-  hasMore: false,
-  loadMore: () => {},
-}
+/**
+ * Hook that manages search state via explicit triggers (not auto-search).
+ *
+ * x402 requires user interaction (wallet signing) per request, so search
+ * must only fire on explicit submit — never on keystroke or debounce.
+ *
+ * @param fetchFn - x402-enhanced fetch for payment-gated endpoints (null = global fetch)
+ */
+export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResult {
+  const [state, setState] = useState<FetchState>(INITIAL)
+  const abortRef = useRef<AbortController | null>(null)
 
-/** Hook that manages search state and API calls. */
-export function useSearch(query: string): SearchResult {
-  const [state, setState] = useState<FetchState>(INITIAL_FETCH)
+  const search = useCallback(
+    (query: string) => {
+      const q = query.trim()
+      if (!q) return
 
-  // Fetch results when query changes (only for non-empty queries).
-  // No synchronous setState — loading is derived from query vs forQuery mismatch.
-  useEffect(() => {
-    if (!query.trim()) return
-
-    let cancelled = false
-
-    searchAgents({ query, limit: PAGE_SIZE, includeMetadata: true })
-      .then((res) => {
-        if (cancelled) return
-        setState({
-          forQuery: query,
-          results: res.results,
-          total: res.total,
-          error: null,
-          hasMore: res.pagination?.hasMore ?? false,
-          nextCursor: res.pagination?.nextCursor ?? null,
-          isLoadingMore: false,
-        })
-      })
-      .catch((err) => {
-        if (cancelled) return
+      // x402 requires a connected wallet — refuse to search without one
+      if (!fetchFn) {
         setState((s) => ({
           ...s,
-          forQuery: query,
-          error: err instanceof Error ? err.message : 'Search failed',
-          isLoadingMore: false,
+          forQuery: q,
+          loading: false,
+          error: 'Wallet not connected. Please connect your wallet to search.',
         }))
-      })
+        return
+      }
 
-    return () => {
-      cancelled = true
-    }
-  }, [query])
+      // Abort any in-flight request
+      abortRef.current?.abort()
+      const controller = new AbortController()
+      abortRef.current = controller
 
-  // Load more results using cursor pagination (called from event handler, not effect)
+      setState((s) => ({ ...s, loading: true, error: null, forQuery: q }))
+
+      searchAgents({ query: q, limit: PAGE_SIZE, includeMetadata: true }, fetchFn)
+        .then((res) => {
+          if (controller.signal.aborted) return
+          setState({
+            forQuery: q,
+            results: res.results,
+            total: res.total,
+            loading: false,
+            error: null,
+            hasMore: res.pagination?.hasMore ?? false,
+            nextCursor: res.pagination?.nextCursor ?? null,
+          })
+        })
+        .catch((err) => {
+          if (controller.signal.aborted) return
+          setState((s) => ({
+            ...s,
+            loading: false,
+            error: err instanceof Error ? err.message : 'Search failed',
+          }))
+        })
+    },
+    [fetchFn],
+  )
+
   const loadMore = useCallback(() => {
-    if (!query.trim() || !state.nextCursor || state.isLoadingMore) return
+    if (!state.forQuery || !state.nextCursor || state.loading || !fetchFn) return
 
-    setState((s) => ({ ...s, isLoadingMore: true }))
+    setState((s) => ({ ...s, loading: true }))
 
-    searchAgents({
-      query,
-      limit: PAGE_SIZE,
-      cursor: state.nextCursor ?? undefined,
-      includeMetadata: true,
-    })
+    searchAgents(
+      {
+        query: state.forQuery,
+        limit: PAGE_SIZE,
+        cursor: state.nextCursor ?? undefined,
+        includeMetadata: true,
+      },
+      fetchFn,
+    )
       .then((res) => {
         setState((prev) => ({
-          forQuery: query,
+          forQuery: prev.forQuery,
           results: [...prev.results, ...res.results],
           total: res.total,
+          loading: false,
           error: null,
           hasMore: res.pagination?.hasMore ?? false,
           nextCursor: res.pagination?.nextCursor ?? null,
-          isLoadingMore: false,
         }))
       })
       .catch((err) => {
         setState((s) => ({
           ...s,
+          loading: false,
           error: err instanceof Error ? err.message : 'Failed to load more',
-          isLoadingMore: false,
         }))
       })
-  }, [query, state.nextCursor, state.isLoadingMore])
-
-  // Derive public state without imperative resets
-  if (!query.trim()) return EMPTY_RESULT
-
-  const isNewSearch = state.forQuery !== query
+  }, [state.forQuery, state.nextCursor, state.loading, fetchFn])
 
   return {
-    results: isNewSearch ? [] : state.results,
-    total: isNewSearch ? 0 : state.total,
-    loading: isNewSearch || state.isLoadingMore,
-    error: isNewSearch ? null : state.error,
-    hasMore: isNewSearch ? false : state.hasMore,
+    results: state.results,
+    total: state.total,
+    loading: state.loading,
+    error: state.error,
+    hasMore: state.hasMore,
+    search,
     loadMore,
   }
 }
