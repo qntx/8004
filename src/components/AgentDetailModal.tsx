@@ -44,14 +44,27 @@ function parseFeedbackDetails(raw: unknown[]): FeedbackDetail[] {
     .filter((v): v is FeedbackDetail => v !== null)
 }
 
-/** Format a Unix epoch timestamp into a human-readable date string. */
+/**
+ * Format a createdAt value into a human-readable string.
+ *
+ * The backend stores a Unix epoch (seconds) when available, or falls back
+ * to the block number when the dataset omits block_timestamp. We distinguish
+ * the two cases by magnitude: Unix timestamps after 2001-01-01 are > 978307200,
+ * while block numbers on most chains are well below that for older blocks but
+ * can overlap — so we use 1e9 as a conservative threshold.
+ */
 function formatTimestamp(epoch: number): string {
-  if (!epoch) return 'N/A'
-  return new Date(epoch * 1000).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-  })
+  if (epoch == null || epoch === 0) return 'N/A'
+  // Likely a real Unix timestamp (seconds since epoch, after ~2001)
+  if (epoch > 1_000_000_000) {
+    return new Date(epoch * 1000).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+  // Fallback: dataset omitted block_timestamp, value is a block number
+  return `Block #${epoch.toLocaleString()}`
 }
 
 /** Inline copy-to-clipboard button. */
