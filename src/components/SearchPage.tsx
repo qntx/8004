@@ -19,7 +19,7 @@ export function SearchPage() {
   const [showWalletPrompt, setShowWalletPrompt] = useState(false)
   const [selectedAgent, setSelectedAgent] = useState<SearchResultItem | null>(null)
   const { fetchWithPayment, isReady: walletReady } = useX402Fetch()
-  const { results, total, loading, error, hasMore, search, loadMore } = useSearch(fetchWithPayment)
+  const { results, loading, error, hasMore, search, loadMore } = useSearch(fetchWithPayment)
   const filtersHook = useFilters()
 
   const dismissWalletPrompt = useCallback(() => setShowWalletPrompt(false), [])
@@ -100,7 +100,6 @@ export function SearchPage() {
           <div className="mt-8 w-full">
             <AgentGrid
               results={results}
-              total={total}
               loading={loading}
               error={error}
               hasMore={hasMore}

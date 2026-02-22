@@ -28,7 +28,6 @@ export interface Filters {
 export interface SearchResponse {
   query: string
   results: SearchResultItem[]
-  total: number
   pagination?: PaginationMeta
   requestId: string
   timestamp: string

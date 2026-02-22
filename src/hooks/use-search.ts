@@ -10,7 +10,6 @@ interface FetchState {
   forFilters: Filters | undefined
   forWalletFilter: WalletFilterParams
   results: SearchResultItem[]
-  total: number
   loading: boolean
   error: string | null
   hasMore: boolean
@@ -22,7 +21,6 @@ const INITIAL: FetchState = {
   forFilters: undefined,
   forWalletFilter: {},
   results: [],
-  total: 0,
   loading: false,
   error: null,
   hasMore: false,
@@ -32,7 +30,6 @@ const INITIAL: FetchState = {
 /** Public shape returned by the hook. */
 export interface SearchResult {
   results: SearchResultItem[]
-  total: number
   loading: boolean
   error: string | null
   hasMore: boolean
@@ -107,7 +104,6 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
             forFilters: filters,
             forWalletFilter: wf,
             results: res.results,
-            total: res.total,
             loading: false,
             error: null,
             hasMore: res.pagination?.hasMore ?? false,
@@ -150,7 +146,6 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
           forFilters: prev.forFilters,
           forWalletFilter: prev.forWalletFilter,
           results: [...prev.results, ...res.results],
-          total: res.total,
           loading: false,
           error: null,
           hasMore: res.pagination?.hasMore ?? false,
@@ -175,7 +170,6 @@ export function useSearch(fetchFn?: typeof globalThis.fetch | null): SearchResul
 
   return {
     results: state.results,
-    total: state.total,
     loading: state.loading,
     error: state.error,
     hasMore: state.hasMore,

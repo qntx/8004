@@ -6,7 +6,6 @@ import { EmptyState } from '@/components/EmptyState'
 
 interface AgentGridProps {
   results: SearchResultItem[]
-  total: number
   loading: boolean
   error: string | null
   hasMore: boolean
@@ -18,7 +17,6 @@ interface AgentGridProps {
 /** Responsive grid of agent cards with pagination. */
 export const AgentGrid: FC<AgentGridProps> = ({
   results,
-  total,
   loading,
   error,
   hasMore,
@@ -36,7 +34,7 @@ export const AgentGrid: FC<AgentGridProps> = ({
       {/* Result count */}
       {results.length > 0 && (
         <p className="text-xs text-muted-foreground">
-          Showing {results.length} of {total} agents
+          Showing {results.length} agent{results.length === 1 ? '' : 's'}
         </p>
       )}
 
@@ -68,16 +66,18 @@ export const AgentGrid: FC<AgentGridProps> = ({
             )}
           </button>
           <span className="text-[11px] text-muted-foreground/40">
-            {loading ? 'Loading…' : `${Math.max(0, total - results.length)} more`}
+            {loading ? 'Loading…' : 'Load more'}
           </span>
         </div>
       )}
 
       {/* End-of-list indicator */}
-      {!hasMore && results.length > 0 && results.length >= total && (
+      {!hasMore && results.length > 0 && (
         <div className="flex items-center gap-3 py-2">
           <div className="h-px flex-1 bg-border/40" />
-          <span className="text-[11px] text-muted-foreground/40">All {total} agents loaded</span>
+          <span className="text-[11px] text-muted-foreground/40">
+            All {results.length} agents loaded
+          </span>
           <div className="h-px flex-1 bg-border/40" />
         </div>
       )}
