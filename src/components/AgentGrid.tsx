@@ -1,5 +1,5 @@
 import type { FC } from 'react'
-import { LoaderIcon } from 'lucide-react'
+import { LoaderIcon, ChevronsDownIcon } from 'lucide-react'
 import type { SearchResultItem } from '@/lib/types'
 import { AgentCard } from '@/components/AgentCard'
 import { EmptyState } from '@/components/EmptyState'
@@ -52,17 +52,33 @@ export const AgentGrid: FC<AgentGridProps> = ({
         <p className="text-center text-xs text-destructive/80">{error}</p>
       )}
 
-      {/* Load more */}
+      {/* Load more — minimal icon trigger */}
       {hasMore && (
-        <div className="flex justify-center">
+        <div className="flex flex-col items-center gap-1.5 pt-2">
           <button
             onClick={onLoadMore}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-accent/50 px-5 py-2 text-xs font-medium text-foreground/80 transition-colors hover:bg-accent disabled:opacity-50"
+            aria-label="Load more agents"
+            className="group flex size-9 items-center justify-center rounded-full border border-border/50 text-muted-foreground/50 transition-all hover:border-border hover:text-foreground/70 hover:shadow-sm active:scale-95 disabled:pointer-events-none"
           >
-            {loading && <LoaderIcon className="size-3.5 animate-spin" />}
-            {loading ? 'Loading...' : 'Load More'}
+            {loading ? (
+              <LoaderIcon className="size-4 animate-spin" />
+            ) : (
+              <ChevronsDownIcon className="size-4 transition-transform group-hover:translate-y-0.5" />
+            )}
           </button>
+          <span className="text-[11px] text-muted-foreground/40">
+            {loading ? 'Loading…' : `${Math.max(0, total - results.length)} more`}
+          </span>
+        </div>
+      )}
+
+      {/* End-of-list indicator */}
+      {!hasMore && results.length > 0 && results.length >= total && (
+        <div className="flex items-center gap-3 py-2">
+          <div className="h-px flex-1 bg-border/40" />
+          <span className="text-[11px] text-muted-foreground/40">All {total} agents loaded</span>
+          <div className="h-px flex-1 bg-border/40" />
         </div>
       )}
     </div>

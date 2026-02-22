@@ -101,7 +101,7 @@ export const AgentCard: FC<{
         {meta && meta.feedbackCount > 0 && (
           <span
             className="inline-flex items-center gap-0.5 rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400"
-            title={`${meta.feedbackCount} feedback${meta.feedbackCount === 1 ? '' : 's'}, score: ${meta.reputationScore.toFixed(2)}`}
+            title={`${meta.feedbackCount} feedback${meta.feedbackCount === 1 ? '' : 's'}, score: ${meta.reputationScore.toFixed(1)}/100`}
           >
             <MessageSquareIcon className="size-2.5" />
             {meta.feedbackCount}

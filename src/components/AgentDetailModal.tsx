@@ -44,27 +44,10 @@ function parseFeedbackDetails(raw: unknown[]): FeedbackDetail[] {
     .filter((v): v is FeedbackDetail => v !== null)
 }
 
-/**
- * Format a createdAt value into a human-readable string.
- *
- * The backend stores a Unix epoch (seconds) when available, or falls back
- * to the block number when the dataset omits block_timestamp. We distinguish
- * the two cases by magnitude: Unix timestamps after 2001-01-01 are > 978307200,
- * while block numbers on most chains are well below that for older blocks but
- * can overlap — so we use 1e9 as a conservative threshold.
- */
-function formatTimestamp(epoch: number): string {
-  if (epoch == null || epoch === 0) return 'N/A'
-  // Likely a real Unix timestamp (seconds since epoch, after ~2001)
-  if (epoch > 1_000_000_000) {
-    return new Date(epoch * 1000).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    })
-  }
-  // Fallback: dataset omitted block_timestamp, value is a block number
-  return `Block #${epoch.toLocaleString()}`
+/** Format a block number for display. Returns 'N/A' when unavailable. */
+function formatBlockNumber(blockNumber: number): string {
+  if (blockNumber == null || blockNumber === 0) return 'N/A'
+  return `Block #${blockNumber.toLocaleString()}`
 }
 
 /** Inline copy-to-clipboard button. */
@@ -285,7 +268,7 @@ export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) =
                   href={meta.endpoint}
                 />
               )}
-              <MetaRow label="Created" value={formatTimestamp(meta.createdAt)} />
+              <MetaRow label="Created" value={formatBlockNumber(meta.createdAt)} />
               <MetaRow
                 label="Last Updated"
                 value={
@@ -302,60 +285,12 @@ export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) =
               />
               <MetaRow
                 label="Reputation Score"
-                value={
-                  meta.feedbackCount > 0
-                    ? `${meta.reputationScore >= 0 ? '+' : ''}${meta.reputationScore.toFixed(2)} / 5.0`
-                    : 'N/A'
-                }
+                value={meta.feedbackCount > 0 ? `${meta.reputationScore.toFixed(1)} / 100` : 'N/A'}
               />
               <MetaRow
                 label="Feedback Count"
                 value={meta.feedbackCount > 0 ? String(meta.feedbackCount) : 'None'}
               />
-            </div>
-          )}
-
-          {/* Feedback details */}
-          {meta && meta.feedbackDetails && meta.feedbackDetails.length > 0 && (
-            <div>
-              <h3 className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
-                <span className="inline-flex items-center gap-1">
-                  <MessageSquareIcon className="size-3" />
-                  Feedback Breakdown ({meta.feedbackDetails.length} wallet
-                  {meta.feedbackDetails.length === 1 ? '' : 's'})
-                </span>
-              </h3>
-              <div className="flex flex-col gap-1.5">
-                {parseFeedbackDetails(meta.feedbackDetails).map((fd) => (
-                  <div
-                    key={fd.w}
-                    className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-muted/30 px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="truncate font-mono text-[11px] text-muted-foreground/80">
-                        {fd.w}
-                      </span>
-                      <CopyButton text={fd.w} />
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0">
-                      <span
-                        className={[
-                          'text-xs font-medium tabular-nums',
-                          fd.s >= 0
-                            ? 'text-emerald-600 dark:text-emerald-400'
-                            : 'text-red-600 dark:text-red-400',
-                        ].join(' ')}
-                      >
-                        {fd.s >= 0 ? '+' : ''}
-                        {fd.s.toFixed(2)}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground/50">
-                        {fd.c} vote{fd.c === 1 ? '' : 's'}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           )}
 
@@ -450,6 +385,49 @@ export const AgentDetailModal: FC<AgentDetailModalProps> = ({ item, onClose }) =
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {/* Feedback details — placed last to avoid pushing core info out of view */}
+          {meta && meta.feedbackDetails && meta.feedbackDetails.length > 0 && (
+            <div>
+              <h3 className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                <span className="inline-flex items-center gap-1">
+                  <MessageSquareIcon className="size-3" />
+                  Feedback Breakdown ({meta.feedbackDetails.length} wallet
+                  {meta.feedbackDetails.length === 1 ? '' : 's'})
+                </span>
+              </h3>
+              <div className="flex flex-col gap-1.5">
+                {parseFeedbackDetails(meta.feedbackDetails).map((fd) => (
+                  <div
+                    key={fd.w}
+                    className="flex items-center justify-between gap-3 rounded-lg border border-border/40 bg-muted/30 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="truncate font-mono text-[11px] text-muted-foreground/80">
+                        {fd.w}
+                      </span>
+                      <CopyButton text={fd.w} />
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span
+                        className={[
+                          'text-xs font-medium tabular-nums',
+                          fd.s >= 50
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : 'text-amber-600 dark:text-amber-400',
+                        ].join(' ')}
+                      >
+                        {fd.s.toFixed(1)}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground/50">
+                        {fd.c} vote{fd.c === 1 ? '' : 's'}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
         </div>
