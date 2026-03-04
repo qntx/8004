@@ -69,4 +69,22 @@ Part of QNTX's open-source ecosystem for autonomous AI agents:
 
 ## License
 
-This project is licensed under the BSD 3-Clause License — see the [LICENSE](LICENSE) file for details.
+Licensed under the [Functional Source License, Version 1.1, MIT Future License](LICENSE.md) (FSL-1.1-MIT).
+
+- You can use, modify, and redistribute for any purpose **except** competing use.
+- Each version automatically converts to the [MIT License](https://opensource.org/licenses/MIT) two years after release.
+
+Unless you explicitly state otherwise, any contribution intentionally submitted for inclusion in this project shall be licensed as above, without any additional terms or conditions.
+
+---
+
+<div align="center">
+
+A **[QNTX](https://qntx.fun)** open-source project.
+
+<a href="https://qntx.fun"><img alt="QNTX" width="369" src="https://raw.githubusercontent.com/qntx/.github/main/profile/qntx-banner.svg" /></a>
+
+<!--prettier-ignore-->
+Code is law. We write both.
+
+</div>
