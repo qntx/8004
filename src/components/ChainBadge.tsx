@@ -1,7 +1,7 @@
 import type { FC } from 'react'
 import { getChain } from '@/lib/chains'
 
-/** Compact chain badge showing the short chain name with its brand color. */
+/** Compact chain badge showing the chain name with its brand color. */
 export const ChainBadge: FC<{ chainId: number }> = ({ chainId }) => {
   const chain = getChain(chainId)
 
@@ -12,10 +12,9 @@ export const ChainBadge: FC<{ chainId: number }> = ({ chainId }) => {
         backgroundColor: `${chain.color}18`,
         color: chain.color,
       }}
-      title={chain.name}
     >
       <span className="size-1.5 rounded-full" style={{ backgroundColor: chain.color }} />
-      {chain.short}
+      {chain.name}
     </span>
   )
 }

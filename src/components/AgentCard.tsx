@@ -1,6 +1,7 @@
-import type { FC } from 'react'
-import { ExternalLinkIcon, ShieldCheckIcon, ZapIcon } from 'lucide-react'
+import { useState, type FC } from 'react'
+import { ExternalLinkIcon, MessageSquareIcon, ShieldCheckIcon, ZapIcon } from 'lucide-react'
 import type { SearchResultItem } from '@/lib/types'
+import { normalizeTrustModels } from '@/lib/normalize'
 import { ScoreBadge } from '@/components/ScoreBadge'
 import { ChainBadge } from '@/components/ChainBadge'
 import { ServiceTag } from '@/components/ServiceTag'
@@ -15,20 +16,30 @@ function initials(name: string): string {
 }
 
 /** Single agent result card with metadata. */
-export const AgentCard: FC<{ item: SearchResultItem }> = ({ item }) => {
+export const AgentCard: FC<{
+  item: SearchResultItem
+  onSelect: (item: SearchResultItem) => void
+}> = ({ item, onSelect }) => {
+  const [imgFailed, setImgFailed] = useState(false)
   const meta = item.metadata
   const services = meta?.services ?? []
+  const trustModels = normalizeTrustModels(meta?.supportedTrust)
   const hasEndpoint = meta?.endpoint && meta.endpoint.length > 0
 
   return (
-    <div className="group flex flex-col gap-3 rounded-xl border border-border/60 bg-background p-4 transition-shadow hover:shadow-md">
+    <button
+      type="button"
+      onClick={() => onSelect(item)}
+      className="group flex cursor-pointer flex-col gap-3 rounded-xl border border-border/60 bg-background p-4 text-left transition-all hover:shadow-md hover:border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+    >
       {/* Top row: avatar + name + score */}
       <div className="flex items-start gap-3">
         {/* Avatar */}
-        {meta?.image ? (
+        {meta?.image && !imgFailed ? (
           <img
             src={meta.image}
             alt={item.name}
+            onError={() => setImgFailed(true)}
             className="size-10 shrink-0 rounded-lg border border-border/40 object-cover"
           />
         ) : (
@@ -78,29 +89,33 @@ export const AgentCard: FC<{ item: SearchResultItem }> = ({ item }) => {
             x402
           </span>
         )}
-        {meta?.supportedTrust && meta.supportedTrust.length > 0 && (
+        {trustModels.length > 0 && (
           <span
             className="inline-flex items-center gap-0.5 rounded-md bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"
-            title={`Trust: ${meta.supportedTrust.join(', ')}`}
+            title={`Trust: ${trustModels.join(', ')}`}
           >
             <ShieldCheckIcon className="size-2.5" />
             trust
           </span>
         )}
+        {meta && meta.feedbackCount > 0 && (
+          <span
+            className="inline-flex items-center gap-0.5 rounded-md bg-blue-500/10 px-1.5 py-0.5 text-[10px] font-medium text-blue-600 dark:text-blue-400"
+            title={`${meta.feedbackCount} feedback${meta.feedbackCount === 1 ? '' : 's'}, score: ${meta.reputationScore.toFixed(1)}/100`}
+          >
+            <MessageSquareIcon className="size-2.5" />
+            {meta.feedbackCount}
+          </span>
+        )}
       </div>
 
-      {/* Footer: endpoint link */}
+      {/* Footer: endpoint hint */}
       {hasEndpoint && (
-        <a
-          href={meta!.endpoint}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-auto flex items-center gap-1 text-[11px] text-muted-foreground/60 transition-colors hover:text-foreground"
-        >
+        <span className="mt-auto flex items-center gap-1 text-[11px] text-muted-foreground/60">
           <ExternalLinkIcon className="size-3" />
           <span className="truncate">{meta!.endpoint}</span>
-        </a>
+        </span>
       )}
-    </div>
+    </button>
   )
 }
